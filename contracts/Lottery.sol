@@ -8,6 +8,8 @@ contract Lottery{
 
 	uint256 private winningNumber;
 
+	uint256 public deposit;
+
 	mapping (address => uint256) public tokensOf;
 	mapping (uint256 => address) public guesser;
 	
@@ -19,5 +21,15 @@ contract Lottery{
 
 	modifier restricted() {
     	if (msg.sender == owner) _;
+  	}
+
+	function buyToken() public payable {
+		uint256 amount = msg.value;
+		uint256 tokens = amount/(1 ether);
+  		uint256 remaining = amount%(1 ether);
+  		deposit += tokens * (1 ether);
+  		totalTokens -= tokens;
+  		tokensOf[msg.sender] += tokens;
+  		msg.sender.send(remaining);
   	}
 }
