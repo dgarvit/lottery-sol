@@ -8,6 +8,10 @@ contract Lottery{
 	uint256 public tokensSold;
 
 	uint256 private winningNumber;
+	address public _winnerAddress;
+	bool public chosen;
+
+	bool public gameIsActive;
 
 	uint256 public deposit;	// total deposit of the Lottery
 
@@ -19,6 +23,7 @@ contract Lottery{
 		owner = msg.sender;
 		totalTokens = totlTokens;
 		winningNumber = winingNumber;
+		gameIsActive = true;
 	}
 
 	modifier restricted() {
@@ -26,7 +31,7 @@ contract Lottery{
   	}
 
 	function buyToken() public payable {
-		if (tokensSold == totalTokens) {	// no more tokens left to sell
+		if ((tokensSold == totalTokens) || (!gameIsActive)) {	// no more tokens left to sell
 			revert();	// refund the amount sent
 		}
 
@@ -47,6 +52,7 @@ contract Lottery{
 	}
 
 	function makeGuess(uint256 guess) public {
+		require(gameIsActive);
 		require(tokensOf[msg.sender] > 0);	// check for token balance
 		require((guess > 0) && (guess <= totalTokens)); // check for underflow/overflow
 		require(isGuessed[guess] == false);	// check if the number has already been taken
@@ -54,5 +60,25 @@ contract Lottery{
 		isGuessed[guess] = true;
 		guesser[guess] = msg.sender;
 		tokensOf[msg.sender]--;
+	}
+
+	function closeGame() public restricted {
+		require(gameIsActive);
+		gameIsActive = false;
+		winnerAddress();
+	}
+
+	function winnerAddress() public returns (address) {
+		if (chosen)
+			return _winnerAddress;
+
+		if (isGuessed[winningNumber])
+			_winnerAddress = guesser[winningNumber];
+
+		else
+			_winnerAddress= 0;
+
+		chosen = true;
+		return _winnerAddress;
 	}
 }
