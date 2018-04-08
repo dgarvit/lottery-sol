@@ -9,11 +9,11 @@ contract Lottery{
 
 	uint256 private winningNumber;
 	address public _winnerAddress;
-	bool public chosen;
 
-	bool public gameIsActive;
+	bool public gameIsActive; // status of game, active or closed
 
 	uint256 public deposit;	// total deposit of the Lottery
+	bool public transferred;	// status if the deposit has been transferred
 
 	mapping (address => uint256) public tokensOf;
 	mapping (uint256 => bool) public isGuessed; // map to store if a number has been guessed
@@ -55,7 +55,7 @@ contract Lottery{
 		require(gameIsActive);
 		require(tokensOf[msg.sender] > 0);	// check for token balance
 		require((guess > 0) && (guess <= totalTokens)); // check for underflow/overflow
-		require(isGuessed[guess] == false);	// check if the number has already been taken
+		require(!isGuessed[guess]);	// check if the number has already been taken
 
 		isGuessed[guess] = true;
 		guesser[guess] = msg.sender;
@@ -65,20 +65,33 @@ contract Lottery{
 	function closeGame() public restricted {
 		require(gameIsActive);
 		gameIsActive = false;
-		winnerAddress();
+		calculateWinnerAddress();
 	}
 
-	function winnerAddress() public returns (address) {
-		if (chosen)
-			return _winnerAddress;
+	function calculateWinnerAddress() private {
+		require(!gameIsActive);
 
 		if (isGuessed[winningNumber])
 			_winnerAddress = guesser[winningNumber];
 
-		else
+		else	// hypothetical case when no one selected the winning number
 			_winnerAddress= 0;
+	}
 
-		chosen = true;
+	function winnerAddress() public view returns (address){
+		require(!gameIsActive);
 		return _winnerAddress;
+	}
+
+	function getPrice() public {
+		require(!gameIsActive);
+		require(!transferred);	// check if already transferred
+		if (_winnerAddress != 0) {	// make sure that winner has been selected
+			_winnerAddress.transfer(deposit / 2);
+		}
+
+		owner.transfer(deposit / 2);
+		transferred = true;
+		deposit = 0;
 	}
 }
