@@ -1,5 +1,8 @@
 var Lottery = artifacts.require("./Lottery.sol");
-var winningNumber = Math.floor(1 + Math.random()*1000000);
+
+var totelTokens = 1000000;
+var winningNumber = Math.floor(Math.random()*totelTokens + 1);
+
 module.exports = function(deployer) {
-  deployer.deploy(Lottery, web3.sha3(winningNumber));
+  deployer.deploy(Lottery, totelTokens, winningNumber);
 };
