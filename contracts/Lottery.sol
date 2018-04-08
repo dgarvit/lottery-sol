@@ -7,7 +7,7 @@ contract Lottery{
 	uint256 public totalTokens;
 	uint256 public tokensSold;
 
-	uint256 private winningNumber;
+	bytes32 private winningNumber;
 	address public _winnerAddress;
 
 	bool public gameIsActive; // status of game, active or closed
@@ -16,10 +16,10 @@ contract Lottery{
 	bool public transferred;	// status if the deposit has been transferred
 
 	mapping (address => uint256) public tokensOf;
-	mapping (uint256 => bool) public isGuessed; // map to store if a number has been guessed
-	mapping (uint256 => address) public guesser; // map to store who guessed that number
+	mapping (bytes32 => bool) public isGuessed; // map to store if a number has been guessed
+	mapping (bytes32 => address) public guesser; // map to store who guessed that number
 	
-	function Lottery(uint256 totlTokens, uint256 winingNumber) public{
+	function Lottery(uint256 totlTokens, bytes32 winingNumber) public {
 		owner = msg.sender;
 		totalTokens = totlTokens;
 		winningNumber = winingNumber;
@@ -55,10 +55,11 @@ contract Lottery{
 		require(gameIsActive);
 		require(tokensOf[msg.sender] > 0);	// check for token balance
 		require((guess > 0) && (guess <= totalTokens)); // check for underflow/overflow
-		require(!isGuessed[guess]);	// check if the number has already been taken
+		bytes32 hash = sha3(guess);
 
-		isGuessed[guess] = true;
-		guesser[guess] = msg.sender;
+		require(!isGuessed[hash]);	// check if the number has already been taken
+		isGuessed[hash] = true;
+		guesser[hash] = msg.sender;
 		tokensOf[msg.sender]--;
 	}
 
